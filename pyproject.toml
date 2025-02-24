@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Assignment_2"
+version = "0.2.0"
+authors = [
+    { name="Daniel Jones", email="dmj@bu.edu" }
+]
+description = "A repository containing numerical solvers for Direct Stiffness Method and Critical Load Analysis"
+readme = "README.md"
+license = { file="LICENSE" }
+requires-python = ">=3.9"
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
+]
+
+dependencies = [
+    "matplotlib>=3.10.0",
+    "numpy>=1.26.4",
+    "scipy>=1.12.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.1.2",
+    "pytest-cov>=3.0.0",
+    "coverage",
+    "codecov"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]  # Assumes you have "src/newtons_method" and "src/elastoplastic_model"
+
+[project.urls]
+"Homepage" = "https://github.com/dmj-bu/ME700-Assignment-2"
+"Bug Tracker" = "https://github.com/dmj-bu/ME700-Assignment-2/issues"
