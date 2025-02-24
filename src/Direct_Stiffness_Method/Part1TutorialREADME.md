@@ -204,9 +204,4 @@ Element 2 Internal Forces: [...]
 3. **Internal forces** guide material selection and cross-section sizing.
    - High internal moments suggest larger or stiffer sections.
 
-###  **Next Steps for Exploration:**
-- Vary E, A, I_y, I_z, and J for sensitivity analysis.
-- Add more nodes and elements for complex geometries.
-- Introduce lateral loads and moment loads at various nodes.
-
 ---
