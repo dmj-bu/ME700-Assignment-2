@@ -29,7 +29,7 @@ class Load:
         self.mz = mz
 
 class Element:
-    def __init__(self, element_id, node_start, node_end, E, nu, A, I_y, I_z, J):
+    def __init__(self, element_id, node_start, node_end, E, nu, A, I_y, I_z, I_rho, J):
         self.id = element_id
         self.node_start = node_start
         self.node_end = node_end
@@ -38,6 +38,7 @@ class Element:
         self.A = A
         self.I_y = I_y
         self.I_z = I_z
+        self.I_rho = I_rho
         self.J = J
 
     def length(self, nodes):
@@ -118,6 +119,7 @@ if __name__ == "__main__":
     A = b * h
     I_y = h * b ** 3 / 12
     I_z = b * h ** 3 / 12
+    I_rho = b * h / 12 * (b**2 + h**2) 
     J = 0.02861
 
     frame = FrameStructure()
@@ -125,8 +127,8 @@ if __name__ == "__main__":
     frame.add_node(Node(1, 15, 0, 10))
     frame.add_node(Node(2, 15, 0, 0))
 
-    frame.add_element(Element(0, 0, 1, E, nu, A, I_y, I_z, J))
-    frame.add_element(Element(1, 1, 2, E, nu, A, I_y, I_z, J))
+    frame.add_element(Element(0, 0, 1, E, nu, A, I_y, I_z, I_rho, J))
+    frame.add_element(Element(1, 1, 2, E, nu, A, I_y, I_z, I_rho, J))
 
     frame.add_boundary_condition(BoundaryCondition(0, True, True, True, True, True, True))
     frame.add_boundary_condition(BoundaryCondition(2, True, True, True, False, False, False))
