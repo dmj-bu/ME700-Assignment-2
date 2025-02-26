@@ -1,5 +1,5 @@
 import numpy as np
-from math_utils import rotation_matrix_3D, transformation_matrix_3D, local_elastic_stiffness_matrix_3D_beam
+from math_utils import local_elastic_stiffness_matrix_3D_beam, transformation_matrix_3D, rotation_matrix_3D
 
 class Node:
     def __init__(self, node_id, x, y, z):
@@ -47,8 +47,11 @@ class Element:
     def global_stiffness_matrix(self, nodes):
         L = self.length(nodes)
         k_local = local_elastic_stiffness_matrix_3D_beam(self.E, self.nu, self.A, L, self.I_y, self.I_z, self.J)
-        s, e = nodes[self.node_start], nodes[self.node_end]
-        gamma = rotation_matrix_3D(s.x, s.y, s.z, e.x, e.y, e.z)
+        
+        gamma = rotation_matrix_3D(
+            nodes[self.node_start].x, nodes[self.node_start].y, nodes[self.node_start].z,
+            nodes[self.node_end].x, nodes[self.node_end].y, nodes[self.node_end].z)
+
         T = transformation_matrix_3D(gamma)
         return T.T @ k_local @ T
 
@@ -100,12 +103,14 @@ class FrameStructure:
         U = np.zeros(total_dofs)
         free_dofs = np.setdiff1d(np.arange(total_dofs), fixed_indices)
         U[free_dofs] = U_reduced
+
         print("Displacements:", U)
 
-        reaction_forces = K @ U - F
-        print("Reaction Forces and Moments:", reaction_forces)
+        # Reaction Forces and Moments
+        reactions = K @ U - F
+        print("Reaction Forces and Moments:", reactions)
 
-        return U, reaction_forces
+        return U, reactions
 
 if __name__ == "__main__":
     E, nu = 1000, 0.3
