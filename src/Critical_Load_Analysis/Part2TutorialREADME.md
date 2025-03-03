@@ -15,7 +15,9 @@ It covers:
 - Defining geometry and properties of the frame
 - Applying loads and boundary conditions
 - Running the solver and interpreting outputs
-- Understanding the mathematical background and equations
+- **Computation of Internal Forces and Moments** (in local element coordinates)
+- **3D Visualization of the Deformed Shape** (scaled displacement plot)
+- **Elastic Critical Load Analysis** (eigenvalue stability analysis for buckling)
 
 This example focuses on a 3D beam structure subjected to forces and moments, as per the first in-class review.
 
@@ -156,26 +158,66 @@ The system is solved using:
 ```
 Where (U) contains translations and rotations.
 
-###  **Code and Instructions:**
+### **Run the Solver:**
+
 ```python
-# Solve the system
-displacement, forces = structure(nodes, connection, load, supports)
+displacements, reaction_forces = structure(nodes, elements, load, supports)
 ```
+---
+
+## **Step 4: Post-Processing**
+
+### **Compute Internal Forces in Local Coordinates:**
+
+```python
+internal_forces = compute_internal_forces(elements, displacements)
+```
+
+- Extracts internal force/moment values per element.
+- Expresses them in **local element coordinates**.
+
+### **Visualize the Deformed Shape (3D Plot):**
+
+```python
+plot_deformed_shape_3D(nodes, displacements)
+```
+
+- Displays a **3D plot** of the displaced structure.
+- Uses scaled displacement vectors.
+
+### **Perform Elastic Critical Load Analysis:**
+
+```python
+critical_loads = elastic_critical_load_analysis(elements, displacements)
+```
+
+- Uses **eigenvalue analysis** to find buckling loads.
 
 ---
 
-## **Step 4: Interpreting Results**
+## **Step 5: Interpreting Results**
 
 ### **Example Output:**
+
 ```
-Computed Displacements: [values...]
-Reaction Forces: [values...]
+Computed Displacements:
+[[0.0023, 0.0012, -0.0035, 0.0008, -0.0015, 0.0021],
+ [0.0056, 0.0028, -0.0072, 0.0013, -0.0031, 0.0045],
+ [0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000]]
+
+Reaction Forces:
+[[12.5, 10.2, -8.4, 3.1, -4.5, 7.3],
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+ [5.2, 2.3, -3.1, 1.1, -1.5, 2.4]]
+
+Elastic Critical Loads:
+[1042.3, 956.7]
 ```
 
-### **Interpretation:**
-- **Displacements** indicate the deformation of the structure.
-- **Reaction forces** validate equilibrium.
-- **Modify material properties or loads to explore different cases.**
+### **Key Takeaways:**
+
+- **Displacements** → How the structure deforms.
+- **Reaction Forces** → Support reactions to applied loads.
+- **Elastic Critical Loads** → Stability (buckling) behavior.
 
 ---
-This tutorial provides a fundamental framework for solving 3D frame problems using the **Direct Stiffness Method**. Modify the parameters and structure to analyze different cases!

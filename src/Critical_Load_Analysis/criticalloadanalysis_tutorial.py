@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 from math_utils import (local_elastic_stiffness_matrix_3D_beam,
                         transformation_matrix_3D,
                         rotation_matrix_3D,
@@ -49,38 +50,26 @@ def compute_internal_forces(Elements, displacements):
         local_disp = displacements[dof_indices]
         f_local = elem.k_e @ local_disp
         internal_forces.append(f_local)
-    return internal_forces
+    return np.array(internal_forces)
 
-# Function to Plot Internal Forces
-def plot_internal_forces(Elements, internal_forces):
-    for i, elem in enumerate(Elements):
-        x = np.linspace(0, elem.L, 10)
-        axial_force = np.full_like(x, internal_forces[i][0])
-        shear_force_y = np.full_like(x, internal_forces[i][1])
-        shear_force_z = np.full_like(x, internal_forces[i][2])
-        plt.figure()
-        plt.plot(x, axial_force, label='Axial Force')
-        plt.plot(x, shear_force_y, label='Shear Force Y')
-        plt.plot(x, shear_force_z, label='Shear Force Z')
-        plt.xlabel("Position along Element (m)")
-        plt.ylabel("Force (N)")
-        plt.title(f"Internal Forces for Element {i}")
-        plt.legend()
-        plt.show()
-
-# Function to Plot Deformed Structure
-def plot_deformed_shape(nodes, displacements, scale=10):
-    deformed_nodes = np.array([[node.x + scale * displacements[node.id * 6],
-                                 node.y + scale * displacements[node.id * 6 + 1],
-                                 node.z + scale * displacements[node.id * 6 + 2]] for node in nodes])
-    original_nodes = np.array([[node.x, node.y, node.z] for node in nodes])
-    plt.figure()
-    plt.plot(original_nodes[:, 0], original_nodes[:, 2], 'bo-', label="Original Structure")
-    plt.plot(deformed_nodes[:, 0], deformed_nodes[:, 2], 'ro-', label="Deformed Shape")
-    plt.xlabel("X Position (m)")
-    plt.ylabel("Z Position (m)")
+# Function to Plot Deformed Structure in 3D
+def plot_deformed_shape_3D(nodes, displacements, scale=10):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    
+    for node in nodes:
+        dx = scale * displacements[node.id * 6]
+        dy = scale * displacements[node.id * 6 + 1]
+        dz = scale * displacements[node.id * 6 + 2]
+        ax.scatter(node.x, node.y, node.z, color='b', label='Original' if node.id == 0 else "")
+        ax.scatter(node.x + dx, node.y + dy, node.z + dz, color='r', label='Deformed' if node.id == 0 else "")
+        ax.plot([node.x, node.x + dx], [node.y, node.y + dy], [node.z, node.z + dz], 'k--')
+    
+    ax.set_xlabel("X Position (m)")
+    ax.set_ylabel("Y Position (m)")
+    ax.set_zlabel("Z Position (m)")
+    ax.set_title("Deformed Shape of Structure")
     plt.legend()
-    plt.title("Deformed Shape of Structure")
     plt.show()
 
 # Elastic Critical Load Analysis
@@ -90,17 +79,28 @@ def elastic_critical_load_analysis(Elements, displacements):
         k_g = local_geometric_stiffness_matrix_3D_beam(elem.L, elem.A, elem.Ip, *displacements[:6])
         eigvals = np.linalg.eigvals(k_g)
         critical_loads.append(min(eigvals))
-    return critical_loads
+    return np.array(critical_loads)
 
-# Running the Updated Solver
+# Define Inputs
+E, nu = 1000, 0.3
+b, h = 0.5, 1.0
+A = b * h
+I_y = h * b ** 3 / 12
+I_z = b * h ** 3 / 12
+I_rho = b * h / 12 * (b**2 + h**2) 
+J = 0.02861
 nodes = [Node(0, 0, 0, 10), Node(1, 15, 0, 10), Node(2, 15, 0, 0)]
-elements = [Element(nodes[0], nodes[1], 1000, 0.3, 0.5, 0.02, 0.02, 0.02, 0.02861, [0, 0, 1]),
-            Element(nodes[1], nodes[2], 1000, 0.3, 0.5, 0.02, 0.02, 0.02, 0.02861, [1, 0, 0])]
-load = np.array([0, 0, 0, 0, 0, 0, 0.1, 0.05, -0.07, 0.05, -0.1, 0.25, 0, 0, 0, 0, 0, 0])
-displacements = np.random.random(18)  # Placeholder for actual solver results
+elements = [Element(nodes[0], nodes[1], E, nu, A, I_y, I_z, I_rho, J, [0, 0, 1]),
+            Element(nodes[1], nodes[2], E, nu, A, I_y, I_z, I_rho, J, [1, 0, 0])]
+supports = [[0, 1, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0], [2, 1, 1, 1, 0, 0, 0]]
+load = np.array([[0, 0, 0, 0, 0, 0], [0.1, 0.05, -0.07, 0.05, -0.1, 0.25], [0, 0, 0, 0, 0, 0]])
 
-internal_forces = compute_internal_forces(elements, displacements)
-plot_internal_forces(elements, internal_forces)
-plot_deformed_shape(nodes, displacements)
+displacements = np.random.random(18)  # Placeholder for actual solver results
+reaction_forces = compute_internal_forces(elements, displacements)
 critical_loads = elastic_critical_load_analysis(elements, displacements)
+
+plot_deformed_shape_3D(nodes, displacements)
+
+print("Computed Displacements:", displacements.reshape(-1, 6))
+print("Reaction Forces:", reaction_forces)
 print("Elastic Critical Loads:", critical_loads)
