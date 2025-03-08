@@ -1,7 +1,12 @@
 import numpy as np
-from math_utils import local_elastic_stiffness_matrix_3D_beam, transformation_matrix_3D, rotation_matrix_3D
+from Direct_Stiffness_Method.math_utils import (
+    local_elastic_stiffness_matrix_3D_beam,
+    transformation_matrix_3D,
+    rotation_matrix_3D
+)
 
-# Node Class
+# Node and Element classes
+
 class Node:
     def __init__(self, node_id, x, y, z, F=None):
         self.id = node_id
@@ -12,106 +17,163 @@ class Node:
         self.supported_dofs = []
     
     def set_support(self, support):
+        # True/1 → this DOF is fixed
         self.supported_dofs = [i for i, val in enumerate(support) if val]
 
-# Element Class
 class Element:
-    def __init__(self, node_start, node_end, E, nu, A, Iz, Iy, Ip, J, z_axis):
+    def __init__(self, node_start, node_end, E, nu, A, Iy, Iz, Ip, J, z_axis):
         self.node_start = node_start
         self.node_end = node_end
         self.E = E
         self.nu = nu
         self.A = A
-        self.Iz = Iz
         self.Iy = Iy
-        self.Ip = Ip
-        self.J = J
-        self.z = np.array(z_axis)
-        self.L = np.sqrt((node_start.x - node_end.x)**2 + (node_start.y - node_end.y)**2 + (node_start.z - node_end.z)**2)
-        if self.L == 0:
-            raise ValueError("Nodes Repeated")
+        self.Iz = Iz
+        self.Ip = Ip  # polar moment of area
+        self.J = J    # torsional constant
+        self.z_axis = np.array(z_axis)
 
-        # Local Stiffness Matrix
-        self.k_e = local_elastic_stiffness_matrix_3D_beam(self.E, self.nu, self.A, self.L, self.Iy, self.Iz, self.J)
-        self.gamma = rotation_matrix_3D(self.node_start.x, self.node_start.y, self.node_start.z, self.node_end.x, self.node_end.y, self.node_end.z, self.z)
+        # Element length
+        self.L = np.sqrt((node_start.x - node_end.x)**2
+                         + (node_start.y - node_end.y)**2
+                         + (node_start.z - node_end.z)**2)
+        if self.L == 0:
+            raise ValueError("Nodes coincide – zero length element.")
+
+        # Local elastic stiffness (3D Bernoulli beam)
+        self.k_e = local_elastic_stiffness_matrix_3D_beam(
+            E=self.E,
+            nu=self.nu,
+            A=self.A,
+            L=self.L,
+            Iy=self.Iy,
+            Iz=self.Iz,
+            J=self.J
+        )
+        # Build rotation from global->local
+        self.gamma = rotation_matrix_3D(
+            node_start.x, node_start.y, node_start.z,
+            node_end.x,   node_end.y,   node_end.z,
+            self.z_axis
+        )
         self.Gamma = transformation_matrix_3D(self.gamma)
+
+        # Element stiffness in global coords
         self.k_global = self.Gamma.T @ self.k_e @ self.Gamma
 
-# Structure Solver
-def structure(nodes, connection, load, supports):
-    Nodes = [Node(i, nodes[i][0], nodes[i][1], nodes[i][2], load[i]) for i in range(len(nodes))]
-    for support in supports:
-        node_index = support[0]
-        Nodes[node_index].set_support(support[1:])
+def structure_solver(nodes, connection, loads, supports):
+    """Assemble global K, apply boundary conditions, solve for displacements."""
     
-    Elements = [Element(Nodes[connection[i][0]], Nodes[connection[i][1]], *connection[i][2:]) for i in range(len(connection))]
-    
-    total_dofs = 6 * len(Nodes)
-    k_global = np.zeros((total_dofs, total_dofs))
-    for elem in Elements:
-        dof_indices = np.array([elem.node_start.id * 6 + j for j in range(6)] + [elem.node_end.id * 6 + j for j in range(6)])
+    # Build Node objects
+    node_objs = []
+    for i, (x, y, z) in enumerate(nodes):
+        node_objs.append(Node(i, x, y, z, F=loads[i]))
+
+    # Apply each support
+    for sup in supports:
+        node_id = sup[0]
+        node_objs[node_id].set_support(sup[1:])
+
+    # Build Elements
+    elem_objs = []
+    for row in connection:
+        n_start, n_end = row[0], row[1]
+        E_, nu_, A_, Iy_, Iz_, Ip_, J_, z_ax_ = row[2:]
+        elem_objs.append(
+            Element(node_objs[n_start], node_objs[n_end],
+                    E_, nu_, A_, Iy_, Iz_, Ip_, J_, z_ax_)
+        )
+
+    # Global stiffness
+    ndof = 6 * len(node_objs)
+    K_global = np.zeros((ndof, ndof))
+    for elem in elem_objs:
+        # Indices for the 2 nodes (each has 6 DOFs)
+        dofs = np.array([6*elem.node_start.id + i for i in range(6)]
+                      + [6*elem.node_end.id   + i for i in range(6)])
+        # Add element matrix
         for i in range(12):
             for j in range(12):
-                k_global[dof_indices[i], dof_indices[j]] += elem.k_global[i, j]
-    
-    # Apply Boundary Conditions
+                K_global[dofs[i], dofs[j]] += elem.k_global[i, j]
+
+    # Identify constrained DOFs
     fixed_dofs = []
-    for support in supports:
-        node_id = support[0]
-        dof_start = node_id * 6
-        for i, is_fixed in enumerate(support[1:]):
-            if is_fixed:
-                fixed_dofs.append(dof_start + i)
-    free_dofs = np.setdiff1d(np.arange(total_dofs), fixed_dofs)
-    
-    k_uu = k_global[np.ix_(free_dofs, free_dofs)]
-    f_u = np.concatenate([node.F for node in Nodes]).flatten()[free_dofs]
-    
-    # Ensure the matrix is not singular
-    if np.linalg.cond(k_uu) > 1e12:
-        raise ValueError("Singular matrix detected. Check boundary conditions.")
-    
-    # Solve for Displacements
-    del_u = np.linalg.solve(k_uu, f_u)
-    del_f = np.zeros(total_dofs)
-    del_f[free_dofs] = del_u
-    f_all = k_global @ del_f
-    
-    return del_f, f_all
+    for sup in supports:
+        base_id = sup[0] * 6
+        # For each DOF in {0..5}, check if sup[i+1]==1
+        for dof_local, is_fixed in enumerate(sup[1:]):
+            if is_fixed == 1:
+                fixed_dofs.append(base_id + dof_local)
 
-# Define Inputs
-# Define Material Properties
-E, nu = 1000, 0.3
-b, h = 0.5, 1.0
-A = b * h
-I_y = h * b ** 3 / 12
-I_z = b * h ** 3 / 12
-I_rho = b * h / 12 * (b**2 + h**2) 
-J = 0.02861
-# Define nodes
+    free_dofs = np.setdiff1d(np.arange(ndof), fixed_dofs)
+
+    # Build global load vector
+    F_global = np.concatenate([n.F for n in node_objs])
+
+    # Partition K and F to solve
+    K_ff = K_global[np.ix_(free_dofs, free_dofs)]
+    F_f  = F_global[free_dofs]
+
+    # Solve the reduced system
+    disp_free = np.linalg.solve(K_ff, F_f)
+
+    # Insert back into full displacement vector
+    disp_all = np.zeros(ndof)
+    disp_all[free_dofs] = disp_free
+
+    # Reaction = K_global @ disp_all
+    reac_all = K_global @ disp_all
+
+    return disp_all, reac_all
+
+
+# Define example geometry, properties, BCs
+
+# Nodal positions
 nodes = np.array([
-    [0, 0, 10],  
-    [15, 0, 10], 
-    [15, 0, 0]  
+    [ 0.0,  0.0,  0.0],   # N0
+    [30.0,  40.0, 0.0],   # N1
 ])
-# Define Element Connections
+
+# Material & section properties
+E  = 1000
+nu = 0.3
+r  = 1.0
+A  = np.pi * r**2           # cross‐sectional area
+I_y = np.pi * r**4 / 4.0     # for a circular section
+I_z = np.pi * r**4 / 4.0
+I_p = np.pi * r**4 / 2.0     # polar moment = I_y + I_z for a circle
+J  = np.pi * r**4 / 2.0     # torsional constant
+
+# Element connectivity:
 connection = np.array([
-    [0, 1, E, nu, b, I_y, I_z, I_rho, J, [0, 0, 1]], # Element 0 between Node 0 and 1
-    [1, 2, E, nu, b, I_y, I_z, I_rho, J, [1, 0, 0]]  # Element 1 between Node 1 and 2
+    [0, 1, E, nu, A, I_y, I_z, I_p, J, [0,0,1]],  # E0
 ], dtype=object)
-# Define Boundary Constraints
+
+# Supports:
 supports = np.array([
-    [0, 1, 1, 1, 1, 1, 1],  # Node 0 is fully fixed (all DOFs constrained)
-    [1, 0, 0, 0, 0, 0, 0],  # Node 1 is free (all DOFs unconstrained)
-    [2, 1, 1, 1, 0, 0, 0]   # Node 2 is pinned (constraining translations, but not rotations)
+    [0, 1,1,1, 1,1,1],  # Node3 fully fixed
+    [1, 0,0,0, 0,0,0],  # Node4 pinned: fix translations, free rotations
 ])
 
-load = np.array([
-    [0, 0, 0, 0, 0, 0],
-    [0.1, 0.05, -0.07, 0.05, -0.1, 0.25],
-    [0, 0, 0, 0, 0, 0]])
+# External loads:
+loads = np.zeros((2,6))
+loads[1] = [-3/5, -4/5, 0.0, 0.0, 0.0, 0.0]
 
-displacement, forces = structure(nodes, connection, load, supports)
+# Solve and show results
 
-print("Computed Displacements: ", displacement)
-print("Reaction Forces: ", forces)
+displacements, reactions = structure_solver(nodes, connection, loads, supports)
+
+print("Nodal Displacements & Rotations:")
+for i in range(len(nodes)):
+    ux, uy, uz, rx, ry, rz = displacements[6*i : 6*i+6]
+    print(f"  Node {i}: U=({ux:.6e}, {uy:.6e}, {uz:.6e}),"
+          f" R=({rx:.6e}, {ry:.6e}, {rz:.6e})")
+
+print("\nReaction Forces & Moments at Constrained Nodes:")
+for i in range(len(nodes)):
+    # If any DOF at node i is fixed, the code will produce a reaction
+    if any(supports[i,1:] == 1):
+        fx, fy, fz, mx, my, mz = reactions[6*i : 6*i+6]
+        print(f"  Node {i}: F=({fx:.6e}, {fy:.6e}, {fz:.6e}),"
+              f" M=({mx:.6e}, {my:.6e}, {mz:.6e})")
