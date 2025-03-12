@@ -234,7 +234,7 @@ def critical_load_analysis(nodes, connection, loads, supports):
 
 
     eigvals_raw, eigvecs_raw = scipy.linalg.eig(Kg_ff, K_ff)
-    print("Raw Eigenvalues:", eigvals_raw)
+    # print("Raw Eigenvalues:", eigvals_raw) # Use if needed
 
     # Extract real parts, sort ascending
     eigvals = np.real(eigvals_raw)
@@ -249,18 +249,23 @@ def critical_load_analysis(nodes, connection, loads, supports):
 # --------------------------------------------------------------------------------
 # Example Usage
 # --------------------------------------------------------------------------------
-
-if __name__ == "__main__":
+def get_problem_setup():
     # Nodal positions
     nodes = np.array([
-        [0.0, 0.0, 0.0],    # Node 0
-        [30.0, 40.0, 0.0],  # Node 1
+    [0, 0, 0],    # N0
+    [10, 0, 0],   # N1
+    [10, 20, 0],  # N2
+    [0, 20, 0],   # N3
+    [0, 0, 25],   # N4
+    [10, 0, 25],  # N5
+    [10, 20, 25], # N6
+    [0, 20, 25]   # N7
     ])
 
     # Material & section properties
-    E  = 1000
+    E = 500
     nu = 0.3
-    r  = 1.0
+    r = 0.5
     A  = np.pi * r**2
     I_y = np.pi * r**4 / 4.0
     I_z = np.pi * r**4 / 4.0
@@ -269,18 +274,41 @@ if __name__ == "__main__":
 
     # Element connectivity:
     connection = np.array([
-        [0, 1, E, nu, A, I_y, I_z, I_p, J, [0,0,1]],
+        [0, 4, E, nu, A, I_y, I_z, I_p, J, [1,0,0]],  # N0 → N4 (vertical) 
+        [1, 5, E, nu, A, I_y, I_z, I_p, J, [1,0,0]],  # N1 → N5 (vertical) 
+        [2, 6, E, nu, A, I_y, I_z, I_p, J, [1,0,0]],  # N2 → N6 (vertical) 
+        [3, 7, E, nu, A, I_y, I_z, I_p, J, [1,0,0]],  # N3 → N7 (vertical) 
+        
+        [4, 5, E, nu, A, I_y, I_z, I_p, J, [0,0,1]],  # N4 → N5 (horizontal X) 
+        [5, 6, E, nu, A, I_y, I_z, I_p, J, [0,0,1]],  # N5 → N6 (horizontal Y) 
+        [6, 7, E, nu, A, I_y, I_z, I_p, J, [0,0,1]],  # N6 → N7 (horizontal X) 
+        [7, 4, E, nu, A, I_y, I_z, I_p, J, [0,0,1]]   # N7 → N4 (horizontal Y)
     ], dtype=object)
 
     # Supports: Node 0 fully fixed, Node 1 pinned
     supports = np.array([
-        [0, 1,1,1, 1,1,1],  # Node 0 fully fixed
-        [1, 0,0,0, 0,0,0],  # Node 1 pinned: fix translations, free rotations
+        [0, 1,1,1, 1,1,1],  # N0 fully fixed
+        [1, 1,1,1, 1,1,1],  # N1 fully fixed
+        [2, 1,1,1, 1,1,1],  # N2 fully fixed
+        [3, 1,1,1, 1,1,1],  # N3 fully fixed
+        [4, 0,0,0, 0,0,0],  # N4 is free
+        [5, 0,0,0, 0,0,0],  # N5 is free
+        [6, 0,0,0, 0,0,0],  # N6 is free
+        [7, 0,0,0, 0,0,0]   # N7 is free
     ])
 
     # External loads: a single compressive load along the bar from Node1->Node0
-    loads = np.zeros((2,6))
-    loads[1] = [-3/5, -4/5, 0.0, 0.0, 0.0, 0.0]
+    loads = np.zeros((8,6))
+    loads[4] = [0, 0, -1, 0, 0, 0]  # N4
+    loads[5] = [0, 0, -1, 0, 0, 0]  # N5
+    loads[6] = [0, 0, -1, 0, 0, 0]  # N6
+    loads[7] = [0, 0, -1, 0, 0, 0]  # N7
+
+    return nodes, connection, loads, supports
+
+if __name__ == "__main__":
+
+    nodes, connection, loads, supports = get_problem_setup()
 
     # Solve linear displacements
     displacements, reactions = structure_solver(nodes, connection, loads, supports)
@@ -309,4 +337,3 @@ if __name__ == "__main__":
     else:
         lambda_crit = np.min(positive_eigs)  # First meaningful eigenvalue
         print(f"Critical Load Factor = {lambda_crit:.5f}")
-

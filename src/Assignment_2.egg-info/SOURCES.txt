@@ -1,0 +1,14 @@
+LICENSE
+pyproject.toml
+src/Assignment_2.egg-info/PKG-INFO
+src/Assignment_2.egg-info/SOURCES.txt
+src/Assignment_2.egg-info/dependency_links.txt
+src/Assignment_2.egg-info/requires.txt
+src/Assignment_2.egg-info/top_level.txt
+src/Critical_Load_Analysis/codereview.py
+src/Critical_Load_Analysis/criticalloadanalysis_tutorial.py
+src/Critical_Load_Analysis/math_utils.py
+src/Direct_Stiffness_Method/__init__.py
+src/Direct_Stiffness_Method/directstiffnessmethod_tutorial.py
+src/Direct_Stiffness_Method/math_utils.py
+tests/test_directstiffnessmethod_tutorial.py

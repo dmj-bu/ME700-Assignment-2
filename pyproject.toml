@@ -34,8 +34,9 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-where = ["src"]  # Assumes you have "src/newtons_method" and "src/elastoplastic_model"
-
+where = ["src"]  
 [project.urls]
+[tool.pytest.ini_options]
+pythonpath = ["src"]
 "Homepage" = "https://github.com/dmj-bu/ME700-Assignment-2"
 "Bug Tracker" = "https://github.com/dmj-bu/ME700-Assignment-2/issues"
