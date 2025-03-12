@@ -197,22 +197,25 @@ These plots provide insight into **structural behavior under static and critical
 ## **Mathematical Background of the Direct Stiffness Method**
 
 ### **1. Local Stiffness Matrices**
-Each beam element contributes a local stiffness matrix \( [k_e] \), which is derived from the governing differential equations of beam bending and axial deformation. The local stiffness matrix for a beam in three dimensions accounts for:
+Each beam element contributes a local stiffness matrix $[k_e]$ , which is derived from the governing differential equations of beam bending and axial deformation. The local stiffness matrix for a beam in three dimensions accounts for:
 - Axial deformation
 - Bending about two principal axes
 - Torsion
 
 The **axial stiffness component**:
+
 $$
 k_{axial} = \frac{EA}{L}
 $$
 
 The **bending stiffness components**:
+
 $$
 k_{bend,y} = \frac{12EI_y}{L^3}, \quad k_{bend,z} = \frac{12EI_z}{L^3}
 $$
 
 The **torsional stiffness component**:
+
 $$
 k_{torsion} = \frac{GJ}{L}
 $$
@@ -222,27 +225,31 @@ Each element stiffness matrix is constructed using these values and organized in
 ---
 
 ### **2. Transformation to Global Coordinates**
-Each element has a local coordinate system aligned with its own axis. To assemble the structure in a global reference frame, a **rotation matrix** $ [T] $ is used to transform local stiffness matrices:
+Each element has a local coordinate system aligned with its own axis. To assemble the structure in a global reference frame, a **rotation matrix** $[T]$ is used to transform local stiffness matrices:
+
 $$
 [K]_g = [T]^T [k_e] [T]
 $$
-where $ [T] $ is the transformation matrix that accounts for the direction cosines of the beam’s local axes with respect to the global coordinate system.
+
+where $[T]$ is the transformation matrix that accounts for the direction cosines of the beam’s local axes with respect to the global coordinate system.
 
 This transformation ensures that each element's contribution aligns correctly in the overall system.
 
 ---
 
 ### **3. Assembling the Global Stiffness Matrix**
-Once each element’s stiffness matrix is transformed into global coordinates, the **global stiffness matrix** $ [K] $ is assembled by summing the contributions of all elements at their respective degrees of freedom.
+Once each element’s stiffness matrix is transformed into global coordinates, the **global stiffness matrix** $[K]$ is assembled by summing the contributions of all elements at their respective degrees of freedom.
 
 After assembling the global stiffness matrix, the system of equations is:
+
 $$
 [K] \{U\} = \{F\}
 $$
+
 where:
-- $ [K] $ is the global stiffness matrix
-- $ \{U\} $ is the nodal displacement vector
-- $ \{F\} $ is the nodal force vector
+- $[K]$ is the global stiffness matrix
+- $\{U\}$ is the nodal displacement vector
+- $\{F\}$ is the nodal force vector
 
 To solve for displacements, boundary conditions are applied to remove dependent degrees of freedom.
 
@@ -251,20 +258,24 @@ To solve for displacements, boundary conditions are applied to remove dependent 
 ### **4: Performing Elastic Critical Load Analysis**
 
 The **elastic critical load analysis** determines the point at which a structure undergoes **buckling** by solving the eigenvalue problem:
+
 $$
 [K] U + \lambda [K_g] U = 0
 $$
-where:
-- $ \lambda $ is the **buckling load factor**
-- $ [K_g] $ is the **geometric stiffness matrix**, which accounts for axial forces in members affecting lateral stability
 
-This equation is solved to obtain the **eigenvalues** ( $ \lambda_i $), where the smallest positive eigenvalue corresponds to the **critical load factor**. The associated **eigenvector** represents the **buckling mode shape**.
+where:
+- $\lambda$ is the **buckling load factor**
+- $[K_g]$ is the **geometric stiffness matrix**, which accounts for axial forces in members affecting lateral stability
+
+This equation is solved to obtain the **eigenvalues** ( $\lambda_i$), where the smallest positive eigenvalue corresponds to the **critical load factor**. The associated **eigenvector** represents the **buckling mode shape**.
 
 The geometric stiffness matrix is derived by considering how axial forces influence the stiffness of members:
+
 $$
 [K_g] = \sum_{elements} [T]^T [k_g] [T]
 $$
-where $ [k_g] $ represents the local geometric stiffness contribution due to axial loads.
+
+where $[k_g]$ represents the local geometric stiffness contribution due to axial loads.
 
 ---
 
@@ -286,7 +297,7 @@ $$
 v(x) = (1-3t^2 + 2t^3)v_1 + (t - 2t^2 + t^3)\theta_1 + (3t^2 - 2t^3)v_2 + (-t^2 + t^3)\theta_2
 $$
 
-where $ t $ is a normalized coordinate along the beam length, and $ v_1, v_2 $ are the displacements at the beam ends.
+where $t$ is a normalized coordinate along the beam length, and $v_1, v_2$ are the displacements at the beam ends.
 
 ---
 
