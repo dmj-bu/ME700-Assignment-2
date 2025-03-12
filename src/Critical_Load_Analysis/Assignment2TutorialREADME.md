@@ -53,7 +53,7 @@ The tutorial is based on the **Example 2 - Frame Buckling** problem.
 
 The example problem used in this tutorial is visualized below:
 
-![Example 2 - Frame Buckling](image.png)
+![Example 2 - Frame Buckling](example_problem.png)
 
 The figure shows the **node connectivity**, **boundary conditions**, and **applied loads** for the problem analyzed in `criticalloadanalysis_tutorial.py`.
 
@@ -152,7 +152,7 @@ lambda_crit = np.min(eigvals[eigvals > 1e-3])
 ```
 Computed Displacements and Rotations:
 ```
-![Critical Load Analysis Output](image.png)
+![Critical Load Analysis Output](analysis_output.png)
 ---
 
 ## **Step 5: 3D Visualization with `3d_grapher.py`**
