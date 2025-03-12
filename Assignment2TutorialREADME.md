@@ -53,7 +53,7 @@ The tutorial is based on the **Example 2 - Frame Buckling** problem.
 
 The example problem used in this tutorial is visualized below:
 
-![Example 2 - Frame Buckling](../images/example_problem.png)
+![Example 2 - Frame Buckling](images/example_problem.png)
 
 The figure shows the **node connectivity**, **boundary conditions**, and **applied loads** for the problem analyzed in `criticalloadanalysis_tutorial.py`.
 
@@ -151,7 +151,7 @@ lambda_crit = np.min(eigvals[eigvals > 1e-3])
 
 Computed Displacements and Rotations:
 
-![Critical Load Analysis Output](../images/analysis_output.png)
+![Critical Load Analysis Output](images/analysis_output.png)
 ---
 
 ## **Step 5: 3D Visualization with `3d_grapher.py`**
@@ -185,10 +185,10 @@ plot_3d_displacements(mode_type="buckling", scale_factor=5)
 The results of the **linear analysis** and **buckling analysis** can be visualized using `3d_grapher.py`. Below are the corresponding plots:
 
 #### **Linear Mode Shape (Deformed Structure - Static Loading Case)**
-![3D Frame - Linear Mode Shape](../images/linearplot.png)
+![3D Frame - Linear Mode Shape](images/linearplot.png)
 
 #### **Buckling Mode Shape (Deformed Structure - Buckling Case)**
-![3D Frame - Buckling Mode Shape](../images/bucklingplot.png)
+![3D Frame - Buckling Mode Shape](images/bucklingplot.png)
 
 These plots provide insight into **structural behavior under static and critical load conditions**. The **buckling mode shape** reveals how the structure deforms at the **critical load factor**, while the **linear mode shape** shows displacement under normal loading conditions.
 
