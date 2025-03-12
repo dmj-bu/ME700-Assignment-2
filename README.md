@@ -90,6 +90,7 @@ J   = np.pi * r**4 / 2.0
 ```
 
 ### **Element Connectivity**
+### [1,0,0] represents the local z-axis for vertical elements, while [0,0,1] represents the local z-axis for horixontal ertical elements
 ```python
 connection = np.array([
     [0, 4, E, nu, A, I_y, I_z, I_p, J, [1,0,0]],
@@ -102,7 +103,20 @@ connection = np.array([
     [7, 4, E, nu, A, I_y, I_z, I_p, J, [0,0,1]]
 ], dtype=object)
 ```
-
+### If the problem uses diaginal elements, use this version of the connectivity array to account for dynamic local z-axis
+```python
+connection = np.array([
+    [
+        i, i+1, E, nu, A, I_y, I_z, I_rho, J, 
+        [
+            -(nodes[i+1][1] - nodes[i][1]) / np.sqrt((nodes[i+1][0] - nodes[i][0])**2 + (nodes[i+1][1] - nodes[i][1])**2),
+            (nodes[i+1][0] - nodes[i][0]) / np.sqrt((nodes[i+1][0] - nodes[i][0])**2 + (nodes[i+1][1] - nodes[i][1])**2),
+            0
+        ]
+    ] 
+    for i in range(len(nodes) - 1)
+], dtype=object)
+```
 ---
 
 ## **Step 2: Applying Loads and Boundary Conditions**
