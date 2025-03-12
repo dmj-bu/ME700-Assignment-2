@@ -1,2 +1,0 @@
-Critical_Load_Analysis
-Direct_Stiffness_Method
