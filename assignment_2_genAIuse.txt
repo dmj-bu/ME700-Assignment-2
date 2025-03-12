@@ -1,0 +1,6 @@
+ChatGPT-4o was used to help define the correct local coordinate system for beam elements, ensuring the proper computation of the local z-axis using trigonometric relationships.
+ChatGPT-4o was used to help write the functions that throw errors and the tests that test these functions.
+ChatGPT-4o was used to make the testing more robust.
+ChatGPT-4o was used to write the first draft of the plotting functions, including visualizing deformed shapes and buckling mode shapes.
+ChatGPT-4o was used to add some descriptive comments to the code to make it easier to follow.
+ChatGPT-4o was used broadly to help make the README file. For example, I uploaded my code and asked it to create a description in markdown of how to use it.
