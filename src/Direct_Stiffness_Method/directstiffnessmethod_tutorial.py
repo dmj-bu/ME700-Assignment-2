@@ -1,11 +1,14 @@
 import numpy as np
+import scipy.linalg
 from Direct_Stiffness_Method.math_utils import (
     local_elastic_stiffness_matrix_3D_beam,
     transformation_matrix_3D,
     rotation_matrix_3D
 )
 
-# Node and Element classes
+# --------------------------------------------------------------------------------
+# Node / Element classes, structure_solver, etc.
+# --------------------------------------------------------------------------------
 
 class Node:
     def __init__(self, node_id, x, y, z, F=None):
@@ -88,19 +91,16 @@ def structure_solver(nodes, connection, loads, supports):
     ndof = 6 * len(node_objs)
     K_global = np.zeros((ndof, ndof))
     for elem in elem_objs:
-        # Indices for the 2 nodes (each has 6 DOFs)
         dofs = np.array([6*elem.node_start.id + i for i in range(6)]
                       + [6*elem.node_end.id   + i for i in range(6)])
-        # Add element matrix
-        for i in range(12):
-            for j in range(12):
-                K_global[dofs[i], dofs[j]] += elem.k_global[i, j]
+        for i_local in range(12):
+            for j_local in range(12):
+                K_global[dofs[i_local], dofs[j_local]] += elem.k_global[i_local, j_local]
 
     # Identify constrained DOFs
     fixed_dofs = []
     for sup in supports:
         base_id = sup[0] * 6
-        # For each DOF in {0..5}, check if sup[i+1]==1
         for dof_local, is_fixed in enumerate(sup[1:]):
             if is_fixed == 1:
                 fixed_dofs.append(base_id + dof_local)
@@ -126,54 +126,82 @@ def structure_solver(nodes, connection, loads, supports):
 
     return disp_all, reac_all
 
+# --------------------------------------------------------------------------------
+# Example Usage
+# --------------------------------------------------------------------------------
+def get_problem_setup():
+    # Nodal positions
+    nodes = np.array([
+    [0, 0, 0],    # N0
+    [10, 0, 0],   # N1
+    [10, 20, 0],  # N2
+    [0, 20, 0],   # N3
+    [0, 0, 25],   # N4
+    [10, 0, 25],  # N5
+    [10, 20, 25], # N6
+    [0, 20, 25]   # N7
+    ])
 
-# Define example geometry, properties, BCs
+    # Material & section properties
+    E = 500
+    nu = 0.3
+    r = 0.5
+    A  = np.pi * r**2
+    I_y = np.pi * r**4 / 4.0
+    I_z = np.pi * r**4 / 4.0
+    I_p = np.pi * r**4 / 2.0
+    J   = np.pi * r**4 / 2.0
 
-# Nodal positions
-nodes = np.array([
-    [ 0.0,  0.0,  0.0],   # N0
-    [30.0,  40.0, 0.0],   # N1
-])
+    # Element connectivity:
+    connection = np.array([
+        [0, 4, E, nu, A, I_y, I_z, I_p, J, [1,0,0]],  # N0 → N4 (vertical) 
+        [1, 5, E, nu, A, I_y, I_z, I_p, J, [1,0,0]],  # N1 → N5 (vertical) 
+        [2, 6, E, nu, A, I_y, I_z, I_p, J, [1,0,0]],  # N2 → N6 (vertical) 
+        [3, 7, E, nu, A, I_y, I_z, I_p, J, [1,0,0]],  # N3 → N7 (vertical) 
+        
+        [4, 5, E, nu, A, I_y, I_z, I_p, J, [0,0,1]],  # N4 → N5 (horizontal X) 
+        [5, 6, E, nu, A, I_y, I_z, I_p, J, [0,0,1]],  # N5 → N6 (horizontal Y) 
+        [6, 7, E, nu, A, I_y, I_z, I_p, J, [0,0,1]],  # N6 → N7 (horizontal X) 
+        [7, 4, E, nu, A, I_y, I_z, I_p, J, [0,0,1]]   # N7 → N4 (horizontal Y)
+    ], dtype=object)
 
-# Material & section properties
-E  = 1000
-nu = 0.3
-r  = 1.0
-A  = np.pi * r**2           # cross‐sectional area
-I_y = np.pi * r**4 / 4.0     # for a circular section
-I_z = np.pi * r**4 / 4.0
-I_p = np.pi * r**4 / 2.0     # polar moment = I_y + I_z for a circle
-J  = np.pi * r**4 / 2.0     # torsional constant
+    # Supports: Node 0 fully fixed, Node 1 pinned
+    supports = np.array([
+        [0, 1,1,1, 1,1,1],  # N0 fully fixed
+        [1, 1,1,1, 1,1,1],  # N1 fully fixed
+        [2, 1,1,1, 1,1,1],  # N2 fully fixed
+        [3, 1,1,1, 1,1,1],  # N3 fully fixed
+        [4, 0,0,0, 0,0,0],  # N4 is free
+        [5, 0,0,0, 0,0,0],  # N5 is free
+        [6, 0,0,0, 0,0,0],  # N6 is free
+        [7, 0,0,0, 0,0,0]   # N7 is free
+    ])
 
-# Element connectivity:
-connection = np.array([
-    [0, 1, E, nu, A, I_y, I_z, I_p, J, [0,0,1]],  # E0
-], dtype=object)
+    # External loads: a single compressive load along the bar from Node1->Node0
+    loads = np.zeros((8,6))
+    loads[4] = [0, 0, -1, 0, 0, 0]  # N4
+    loads[5] = [0, 0, -1, 0, 0, 0]  # N5
+    loads[6] = [0, 0, -1, 0, 0, 0]  # N6
+    loads[7] = [0, 0, -1, 0, 0, 0]  # N7
 
-# Supports:
-supports = np.array([
-    [0, 1,1,1, 1,1,1],  # Node3 fully fixed
-    [1, 0,0,0, 0,0,0],  # Node4 pinned: fix translations, free rotations
-])
+    return nodes, connection, loads, supports
 
-# External loads:
-loads = np.zeros((2,6))
-loads[1] = [-3/5, -4/5, 0.0, 0.0, 0.0, 0.0]
+if __name__ == "__main__":
 
-# Solve and show results
+    nodes, connection, loads, supports = get_problem_setup()
 
-displacements, reactions = structure_solver(nodes, connection, loads, supports)
+    # Solve linear displacements
+    displacements, reactions = structure_solver(nodes, connection, loads, supports)
 
-print("Nodal Displacements & Rotations:")
-for i in range(len(nodes)):
-    ux, uy, uz, rx, ry, rz = displacements[6*i : 6*i+6]
-    print(f"  Node {i}: U=({ux:.6e}, {uy:.6e}, {uz:.6e}),"
-          f" R=({rx:.6e}, {ry:.6e}, {rz:.6e})")
+    print("Nodal Displacements & Rotations:")
+    for i in range(len(nodes)):
+        ux, uy, uz, rx, ry, rz = displacements[6*i : 6*i+6]
+        print(f"  Node {i}: U=({ux:.6e}, {uy:.6e}, {uz:.6e}),"
+              f" R=({rx:.6e}, {ry:.6e}, {rz:.6e})")
 
-print("\nReaction Forces & Moments at Constrained Nodes:")
-for i in range(len(nodes)):
-    # If any DOF at node i is fixed, the code will produce a reaction
-    if any(supports[i,1:] == 1):
-        fx, fy, fz, mx, my, mz = reactions[6*i : 6*i+6]
-        print(f"  Node {i}: F=({fx:.6e}, {fy:.6e}, {fz:.6e}),"
-              f" M=({mx:.6e}, {my:.6e}, {mz:.6e})")
+    print("\nReaction Forces & Moments at Constrained Nodes:")
+    for i in range(len(nodes)):
+        if any(supports[i,1:] == 1):
+            fx, fy, fz, mx, my, mz = reactions[6*i : 6*i+6]
+            print(f"  Node {i}: F=({fx:.6e}, {fy:.6e}, {fz:.6e}),"
+                  f" M=({mx:.6e}, {my:.6e}, {mz:.6e})")
