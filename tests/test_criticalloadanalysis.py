@@ -1,6 +1,13 @@
+import sys
+import os
 import pytest
-import numpy as np
-from criticalloadanalysis_tutorial import (
+import numpy as np 
+
+# Forcefully add `src/` to the Python path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
+
+# Correct import using `src`
+from src.Critical_Load_Analysis.criticalloadanalysis_tutorial import (
     structure_solver,
     critical_load_analysis,
     get_problem_setup
@@ -40,7 +47,7 @@ def test_critical_load_analysis(problem_setup):
 
 def test_invalid_element():
     """Ensure element initialization fails with zero-length elements."""
-    from criticalloadanalysis_tutorial import Node, Element
+    from src.Critical_Load_Analysis.criticalloadanalysis_tutorial import Node, Element
     with pytest.raises(ValueError, match="zero length element"):
         node1 = Node(0, 0, 0, 0)
         node2 = Node(1, 0, 0, 0)  # Same coordinates as node1
