@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from src.Critical_Load_Analysis.math_utils import (
+from src.Direct_Stiffness_Method.math_utils import (
     local_elastic_stiffness_matrix_3D_beam,
     check_unit_vector,
     check_parallel,

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 from src.Direct_Stiffness_Method.directstiffnessmethod_tutorial import (
-    Node, Element, structure_solver, get_problem_setup
+    Node, Element, structure_solver, get_problem_setup, main
 )
 
 def test_node_creation():
@@ -42,6 +42,13 @@ def test_structure_solver():
 
     # Check some expected values (example: first fixed node should have zero displacement)
     assert np.allclose(displacements[:6], np.zeros(6), atol=1e-6)
+
+def test_main_output():
+    """Test main function execution to ensure it does not throw errors."""
+    try:
+        main()
+    except Exception as e:
+        pytest.fail(f"main() function raised an error: {e}")
 
 if __name__ == "__main__":
     pytest.main()

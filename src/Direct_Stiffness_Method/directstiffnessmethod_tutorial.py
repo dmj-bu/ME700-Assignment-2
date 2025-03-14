@@ -186,22 +186,21 @@ def get_problem_setup():
 
     return nodes, connection, loads, supports
 
-if __name__ == "__main__":
-
+def main():
     nodes, connection, loads, supports = get_problem_setup()
-
-    # Solve linear displacements
     displacements, reactions = structure_solver(nodes, connection, loads, supports)
 
     print("Nodal Displacements & Rotations:")
     for i in range(len(nodes)):
         ux, uy, uz, rx, ry, rz = displacements[6*i : 6*i+6]
-        print(f"  Node {i}: U=({ux:.6e}, {uy:.6e}, {uz:.6e}),"
-              f" R=({rx:.6e}, {ry:.6e}, {rz:.6e})")
+        print(f" Node {i}: U=({ux:.6e}, {uy:.6e}, {uz:.6e}), R=({rx:.6e}, {ry:.6e}, {rz:.6e})")
 
     print("\nReaction Forces & Moments at Constrained Nodes:")
     for i in range(len(nodes)):
         if any(supports[i,1:] == 1):
             fx, fy, fz, mx, my, mz = reactions[6*i : 6*i+6]
-            print(f"  Node {i}: F=({fx:.6e}, {fy:.6e}, {fz:.6e}),"
-                  f" M=({mx:.6e}, {my:.6e}, {mz:.6e})")
+            print(f" Node {i}: F=({fx:.6e}, {fy:.6e}, {fz:.6e}), M=({mx:.6e}, {my:.6e}, {mz:.6e})")
+
+
+if __name__ == "__main__":
+    main()
