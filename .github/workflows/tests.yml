@@ -42,7 +42,7 @@ jobs:
           python -c "import matplotlib; matplotlib.use('Agg')"
 
       - name: Run Tests with Coverage
-        run: pytest --ignore=tests/test_directstiffnessmethod_tutorial.py --cov=src --cov-report=xml -vv
+        run: pytest --cov=src --cov-report=xml -vv
         
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
