@@ -306,34 +306,33 @@ def get_problem_setup():
 
     return nodes, connection, loads, supports
 
-if __name__ == "__main__":
-
+def main():
     nodes, connection, loads, supports = get_problem_setup()
-
-    # Solve linear displacements
     displacements, reactions = structure_solver(nodes, connection, loads, supports)
 
     print("Nodal Displacements & Rotations:")
     for i in range(len(nodes)):
         ux, uy, uz, rx, ry, rz = displacements[6*i : 6*i+6]
-        print(f"  Node {i}: U=({ux:.6e}, {uy:.6e}, {uz:.6e}),"
-              f" R=({rx:.6e}, {ry:.6e}, {rz:.6e})")
+        print(f" Node {i}: U=({ux:.6e}, {uy:.6e}, {uz:.6e}), R=({rx:.6e}, {ry:.6e}, {rz:.6e})")
 
     print("\nReaction Forces & Moments at Constrained Nodes:")
     for i in range(len(nodes)):
         if any(supports[i,1:] == 1):
             fx, fy, fz, mx, my, mz = reactions[6*i : 6*i+6]
-            print(f"  Node {i}: F=({fx:.6e}, {fy:.6e}, {fz:.6e}),"
-                  f" M=({mx:.6e}, {my:.6e}, {mz:.6e})")
+            print(f" Node {i}: F=({fx:.6e}, {fy:.6e}, {fz:.6e}), M=({mx:.6e}, {my:.6e}, {mz:.6e})")
 
-    # Critical Load Analysis
     eigvals, eigvecs = critical_load_analysis(nodes, connection, loads, supports)
 
-    # The smallest positive eigenvalue is your critical factor (since we
-    # have λ on the left side in (K_ff + λK_g_ff) = 0, we look for +λ).
+    # The smallest positive eigenvalue is your critical factor
     positive_eigs = 1 / np.abs(eigvals[eigvals < -1e-3])
     if len(positive_eigs) == 0:
         print("No positive buckling eigenvalues found.")
+        lambda_crit = None  # No valid eigenvalue
     else:
         lambda_crit = np.min(positive_eigs)  # First meaningful eigenvalue
         print(f"Critical Load Factor = {lambda_crit:.5f}")
+
+    return eigvals, eigvecs, lambda_crit  # Returns everything for testing
+
+if __name__ == "__main__":
+    main()
