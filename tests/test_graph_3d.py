@@ -1,5 +1,7 @@
 import numpy as np
 import pytest
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from src.Critical_Load_Analysis.graph_3d import (
     get_free_dofs,
