@@ -1,10 +1,10 @@
 # Direct Stiffness Method Solver Tutorial
 
 [![python](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
-[![os](https://img.shields.io/badge/os-ubuntu%20|%20macos%20|%20windows-blue.svg)](https://github.com/dmj-bu/ME700-Assignment-1)
-[![license](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/dmj-bu/ME700-Assignment-1/blob/main/LICENSE)
+[![os](https://img.shields.io/badge/os-ubuntu%20|%20macos%20|%20windows-blue.svg)](https://github.com/dmj-bu/ME700-Assignment-2)
+[![license](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/dmj-bu/ME700-Assignment-2/blob/main/LICENSE)
 
-[![codecov](https://codecov.io/gh/dmj-bu/ME700-Assignment-1/Elasto_Plastic_Model/graph/badge.svg?token=YOUR_CODECOV_TOKEN)]((https://codecov.io/gh/dmj-bu/ME700-Assignment-1/tree/main/src%2FElasto_Plastic_Model))
+[![codecov](https://codecov.io/gh/dmj-bu/ME700-Assignment-2/Elasto_Plastic_Model/graph/badge.svg?token=YOUR_CODECOV_TOKEN)]((https://codecov.io/gh/dmj-bu/ME700-Assignment-2/tree/main/src))
 [![Run Tests](https://github.com/dmj-bu/ME700-Assignment-2/actions/workflows/tests.yml/badge.svg)](https://github.com/dmj-bu/ME700-Assignment-2/actions/workflows/tests.yml)
 ---
 
