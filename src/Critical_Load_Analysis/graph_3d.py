@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from Critical_Load_Analysis.criticalloadanalysis_tutorial import (
-    critical_load_analysis, structure_solver, get_problem_setup
+    critical_load_analysis, structure_solver, get_problem_setup, main
 )
 
 def get_free_dofs(supports):
@@ -20,11 +20,20 @@ def extract_analysis_results():
     nodes, connection, loads, supports = get_problem_setup()
     disp_linear, _ = structure_solver(nodes, connection, loads, supports)
     eigvals, eigvecs = critical_load_analysis(nodes, connection, loads, supports)
+    print("DEBUG: eigenvalues from test:", eigvals)
+    print("DEBUG: first few eigenvectors shape:", eigvecs.shape)
     free_dofs = get_free_dofs(supports)
 
     # Extract smallest positive eigenvalue (Critical Load Factor)
-    positive_eigs = eigvals[eigvals > 1e-3]  # Filter out negative/zero values
-    lambda_crit = np.min(positive_eigs) if len(positive_eigs) > 0 else None
+    relevant_eigs = eigvals[eigvals < -1e-3]
+
+    if len(relevant_eigs) == 0:
+        # No valid negative eigenvalues => no buckling factor
+        lambda_crit = None
+    else:
+        # Invert and take absolute value
+        pos_buckling_eigs = 1 / np.abs(relevant_eigs)
+        lambda_crit = np.min(pos_buckling_eigs)
 
     # Initialize full displacement vectors
     full_disp_buckling = np.zeros(len(nodes) * 6)
